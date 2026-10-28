@@ -3,20 +3,24 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "distributed-multiagent"
-version = "0.1.0"
-description = "Educational distributed multi-agent market simulation for a deep learning technologies project"
+name = "distributed-a2a-student-peer"
+version = "1.0.0"
+description = "Classroom A2A student peer for the Deep Learning Technologies final project"
 readme = "README.md"
-requires-python = ">=3.11"
-license = { text = "MIT" }
-authors = [{ name = "Project Author" }]
-dependencies = []
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi>=0.115,<1",
+  "uvicorn>=0.30,<1",
+  "httpx>=0.27,<1",
+  "gradio>=6,<7",
+  "openai>=2,<3",
+]
 
 [project.scripts]
-distributed-multiagent = "distributed_multiagent.cli:main"
+student-a2a-peer = "app:main"
 
-[tool.setuptools.packages.find]
-where = ["src"]
+[tool.setuptools]
+py-modules = ["app", "a2a_wire", "agent_core"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

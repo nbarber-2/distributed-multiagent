@@ -1,33 +1,34 @@
-# Architecture and Message Flow
+# Architecture
 
-## Current design
+~~~text
+Classmate agent
+      |
+      | A2A message/send
+      v
+FastAPI A2A service :8000
+      |
+      +--> create one input-required task per question
+      +--> draft an answer in a background thread
+      +--> expose tasks/get and tasks/cancel
+                       |
+                       v
+               Gradio review UI :7860
+                       |
+          student edits, approves, or declines
+                       |
+                       v
+          completed/rejected A2A task
+~~~
 
-The project models a small multi-agent system through explicit interfaces and typed messages. The first version runs in one Python process so the message contract and decision trail are easy to inspect.
+The Agent Card is served from /.well-known/agent-card.json. It advertises the public port-8000 endpoint, JSON-RPC transport, skills, and a classroom studentProfile extension.
 
-1. **Market snapshot**: immutable symbol and price window.
-2. **Research agent**: emits an action, a bounded heuristic confidence score, and a rationale.
-3. **Risk agent**: applies a minimum-confidence gate and a maximum exposure limit.
-4. **Coordinator**: routes the proposal and review, then returns the complete decision trace.
-5. **Evaluator**: reports descriptive metrics for the synthetic price path.
+The student peer uses the same A2A v0.3 JSON-RPC wire format for registry operations and direct peer conversations. Registry requests are sent as data parts containing an operation and any operation fields. Questions to classmates use text parts. Outgoing tasks are polled with tasks/get.
 
-## Message contracts
+Task records and answer drafts are protected by a re-entrant lock. Draft generation runs in a background thread so that incoming requests return promptly and the review UI remains responsive. Approving a draft creates a text artifact and completes that task; declining it moves the task to rejected. No answer is returned before approval.
 
-| Message | Sender | Recipient | Purpose |
-|---|---|---|---|
-| `signal.proposed` | research | risk | Proposed action and rationale |
-| `risk.reviewed` | risk | coordinator | Approved/rejected action and exposure |
+## Trust boundaries
 
-## Deep-learning extension point
-
-Replace `ResearchAgent.analyze` with an inference adapter that accepts a feature tensor and returns a calibrated score. Keep risk controls separate from the model so a learned signal cannot override exposure limits. Evaluate the trained model against the current momentum baseline using chronological train/validation/test splits and metrics chosen before testing.
-
-## Distributed extension point
-
-For a networked implementation, serialize each message as JSON and send it over a message broker or HTTP interface. Add message IDs, timestamps, schema versions, retries, idempotency, timeouts, and audit logging before introducing asynchronous agents.
-
-## Design boundaries
-
-- Synthetic prices are not market data.
-- The confidence value is a heuristic score, not a calibrated probability.
-- The reported metrics describe the synthetic path only.
-- No live trading or brokerage API is implemented.
+- Registry cards, peer messages, and model-generated drafts are untrusted input.
+- The peer accepts only text questions up to 4,000 characters and caps stored tasks.
+- The LLM receives the question and the student's configured profile. Its draft is never sent automatically.
+- The public A2A endpoint is unauthenticated and should carry only the non-sensitive classroom profile and questions.

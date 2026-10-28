@@ -1,12 +1,10 @@
 __pycache__/
 *.py[cod]
-*.egg-info/
 .venv/
 venv/
+*.egg-info/
 .env
+.env.*
+!.env.example
+.profile.json.tmp
 .pytest_cache/
-.coverage
-htmlcov/
-dist/
-build/
-.DS_Store

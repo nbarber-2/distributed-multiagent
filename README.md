@@ -1,79 +1,88 @@
-# Distributed Multi-Agent Market Simulator
+# Distributed A2A Student Peer
 
-**Course:** Deep Learning Technologies  
-**Project:** Final project
+Deep Learning Technologies final project: a student-operated agent that publishes an A2A Agent Card, registers with the instructor registry, discovers classmates, sends questions, and lets the receiving student review each answer before sending it.
 
-A research prototype for a distributed, multi-agent financial decision system. Specialized agents analyze a market snapshot, propose a position, apply risk limits, and coordinate a simulated portfolio action. The initial implementation uses transparent baseline rules so the workflow can be tested before replacing the analyst with a trained deep-learning model.
+The app runs two services:
 
-> **Safety and scope:** This is an educational simulation. It does not connect to a broker, place live orders, or provide investment advice. All market data in the demo is synthetic.
+- Gradio classroom UI on port 7860.
+- A2A v0.3 JSON-RPC peer on port 8000.
 
-## What it demonstrates
+The implementation follows the course A2A lesson: Agent Chat, Directory & Send, Incoming Requests, and Outgoing Requests. Incoming questions become separate A2A tasks and stay in input-required state until the student approves or declines them.
 
-- **Market data agent** — produces a reproducible synthetic price series and current market snapshot.
-- **Research agent** — turns recent price movement into a transparent BUY / SELL / HOLD proposal with a confidence score.
-- **Risk agent** — checks the proposal against configurable position and confidence limits.
-- **Coordinator** — passes typed messages between agents, records each decision, and returns a final simulated action.
-- **Evaluation** — computes basic return, volatility, and drawdown statistics from the generated series.
+## Configure Codespaces
 
-The current research agent is a rule-based baseline, **not a trained deep-learning model**. This gives the project a reliable end-to-end foundation and a clear comparison point for a future neural model.
+Before creating a Codespace, add these repository secrets in Settings → Secrets and variables → Codespaces:
 
-## Quick start
+| Secret | Purpose |
+| --- | --- |
+| OPENAI_API_KEY | Enables Agent Chat and proposed answer drafts. |
+| INSTRUCTOR_REGISTRY_URL | Instructor's public Codespaces HTTPS URL for the port-8000 A2A registry. |
 
-Requires Python 3.11 or newer. The starter version uses only the Python standard library.
+Never put either secret in a source file or commit. If you add the secrets after creating a Codespace, rebuild it so the environment receives them.
 
-```bash
-python -m venv .venv
-source .venv/bin/activate
-# Windows: .venv\Scripts\activate
-python -m pip install -e .
-python -m distributed_multiagent
-```
+## Run
 
-Run tests:
+Open the repository in GitHub Codespaces. Dependencies install automatically. In the Codespace terminal, run:
 
-```bash
+~~~sh
+python app.py
+~~~
+
+Open the forwarded Gradio port 7860 link. In the Ports tab, make port 8000 Public so other classroom agents can reach this peer. Port 7860 can stay Private.
+
+The public Agent Card is available at:
+
+~~~text
+https://YOUR-CODESPACE-8000.app.github.dev/.well-known/agent-card.json
+~~~
+
+If the Codespace URL changes, restart the app and register the Agent Card again.
+
+For local development, install dependencies and set the same environment variables:
+
+~~~sh
+python -m pip install -r requirements.txt
+python app.py
+~~~
+
+Set PUBLIC_A2A_URL to the reachable HTTPS URL when running outside Codespaces. Without it, the card advertises localhost.
+
+## Classroom workflow
+
+1. In Directory & Send, enter your agent name, purpose, hometown, hobby, and favorite movie. These fields start with neutral placeholders so the app does not invent personal facts.
+2. Choose Register / Update my Agent Card via A2A. The profile is published as the card's studentProfile classroom extension.
+3. Refresh Directory via A2A, select a registered classmate, and send a question.
+4. Use Outgoing Requests to refresh the remote A2A task. The task remains input-required until the recipient approves a response.
+5. Use Incoming Requests to read questions, edit draft answers, then approve or decline each task.
+6. Agent Chat can update the local profile, register the card, show the directory, send a question, and check outgoing requests when the user asks.
+
+The Agent Card fields are public to the classroom registry. Use only the non-sensitive course profile details requested by the assignment.
+
+## Tests
+
+~~~sh
 python -m unittest discover -s tests -v
-```
+~~~
 
-## Example workflow
+## Project structure
 
-1. Generate deterministic synthetic prices.
-2. Ask the research agent for a directional signal.
-3. Ask the risk agent to approve, reduce, or reject the proposed exposure.
-4. Record the coordinator's decision and print a compact run summary.
+~~~text
+.
+├── .devcontainer/devcontainer.json
+├── app.py
+├── a2a_wire.py
+├── agent_core.py
+├── agent_instructions.md
+├── docs/
+├── profile.json
+├── requirements.txt
+└── tests/
+~~~
 
-## Configuration
+## Scope and limits
 
-The demo exposes a seed and number of time steps, so runs are reproducible:
-
-```bash
-python -m distributed_multiagent --seed 7 --steps 120
-```
-
-## Architecture
-
-```text
-Synthetic Market Data
-        |
-        v
-   Research Agent ---- signal / confidence ----+
-                                               v
-                                        Risk Agent
-                                               |
-                                        approved exposure
-                                               v
-                                         Coordinator
-                                               |
-                                      Simulated decision
-```
-
-See [docs/architecture.md](docs/architecture.md) for design notes and [docs/roadmap.md](docs/roadmap.md) for next steps.
-
-## Limitations and next steps
-
-- Synthetic data is for software validation only; it does not establish trading performance.
-- The baseline signal uses recent returns, not a learned representation.
-- The current demo is a single-process simulation of agent boundaries, not a networked distributed deployment.
-- No broker integration, credentials, or live trading are included.
-
-Planned extensions include a trained time-series model, an independent evaluator agent, message/event logging, and experiments comparing the baseline with the learned model.
+- The server implements the classroom subset of A2A v0.3 JSON-RPC: Agent Card, message/send, tasks/get, and tasks/cancel.
+- Student and registry task state is held in memory. Restarting the app clears local tasks and drafts.
+- Port 8000 is intended to be publicly reachable for the assignment. It is unauthenticated; do not send secrets or private information in messages.
+- Answer drafts can use the configured OpenAI model. Drafts are never sent until the receiving student approves them.
+- The app does not connect to financial services or perform actions outside the classroom A2A network.
