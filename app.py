@@ -33,7 +33,7 @@ from agent_core import (
 )
 
 ROOT = Path(__file__).resolve().parent
-PROFILE_PATH = ROOT / "profile.json"
+PROFILE_PATH = ROOT / ".student_profile.json"
 INSTRUCTIONS_PATH = ROOT / "agent_instructions.md"
 MODEL = os.environ.get("OPENAI_MODEL", "gpt-4.1-mini")
 REGISTRY_URL = os.environ.get("INSTRUCTOR_REGISTRY_URL", "").strip().rstrip("/")

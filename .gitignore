@@ -6,5 +6,5 @@ venv/
 .env
 .env.*
 !.env.example
-.profile.json.tmp
+.student_profile.json*
 .pytest_cache/

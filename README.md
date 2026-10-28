@@ -49,7 +49,7 @@ Set PUBLIC_A2A_URL to the reachable HTTPS URL when running outside Codespaces. W
 
 ## Classroom workflow
 
-1. In Directory & Send, enter your agent name, purpose, hometown, hobby, and favorite movie. These fields start with neutral placeholders so the app does not invent personal facts.
+1. In Directory & Send, enter your agent name, purpose, hometown, hobby, and favorite movie. These fields start with neutral placeholders so the app does not invent personal facts. Your profile is saved locally in an ignored file and is not committed with the project.
 2. Choose Register / Update my Agent Card via A2A. The profile is published as the card's studentProfile classroom extension.
 3. Refresh Directory via A2A, select a registered classmate, and send a question.
 4. Use Outgoing Requests to refresh the remote A2A task. The task remains input-required until the recipient approves a response.
@@ -74,10 +74,11 @@ python -m unittest discover -s tests -v
 ├── agent_core.py
 ├── agent_instructions.md
 ├── docs/
-├── profile.json
 ├── requirements.txt
 └── tests/
 ~~~
+
+Profile data is saved to `.student_profile.json` in the Codespace, which `.gitignore` excludes.
 
 ## Scope and limits
 
@@ -85,4 +86,4 @@ python -m unittest discover -s tests -v
 - Student and registry task state is held in memory. Restarting the app clears local tasks and drafts.
 - Port 8000 is intended to be publicly reachable for the assignment. It is unauthenticated; do not send secrets or private information in messages.
 - Answer drafts can use the configured OpenAI model. Drafts are never sent until the receiving student approves them.
-- The app does not connect to financial services or perform actions outside the classroom A2A network.
+- The app does not perform actions outside the classroom A2A network.
